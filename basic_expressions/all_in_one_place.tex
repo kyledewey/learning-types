@@ -1,0 +1,64 @@
+\section{All in One Place}
+We previously said that the advantage of this sort of mathematical formalism is conciseness and clarity.
+To illustrate this, the meat of everything we've discussed is repeated below, without the corresponding explanations.
+All the explanations are entirely redundant with this; in a formal setting, only the following needs to be shown.
+
+\subsection{Abstract Syntax}
+
+\begin{gather*}
+  x \in \mtt{Variable} \qquad i \in \mtt{Integer}
+\end{gather*}
+\begin{align*}
+  \tau \in \mtt{Type} &::= \kw{int} \alt \kw{bool}\\
+  e \in \mtt{Exp} &::= x \alt i \alt \kw{true} \alt \kw{false} \alt e_1 \;\&\&\; e_2 \alt e_1 + e_2 \alt e_1 < e_2\\
+  &\lalt \kw{let } x: \tau = e_1 \kw{ in } e_2\\
+  &\lalt \kw{assign } x = e_1 \kw{ in } e_2
+\end{align*}
+
+\subsection{Type System}
+\begin{align*}
+  \Gamma \in \mtt{TypeEnv} &= \mtt{Variable} \to \mtt{Type}
+\end{align*}
+
+\begin{center}
+  \begin{tabular}{ccc}
+    \infer[(\textsc{integer})]
+      {\typeof{i}{\Gamma}{\kw{int}}}
+      {}
+    &
+    \infer[(\textsc{true})]
+      {\typeof{\kw{true}}{\Gamma}{\kw{bool}}}
+      {}
+    &
+    \infer[(\textsc{false})]
+      {\typeof{\kw{false}}{\Gamma}{\kw{bool}}}
+      {}
+      \\
+      \\
+    \infer[(\textsc{and})]
+      {\typeof{e_1 \;\&\&\; e_2}{\Gamma}{\kw{bool}}}
+      {\typeof{e_1}{\Gamma}{\kw{bool}} \quad \typeof{e_2}{\Gamma}{\kw{bool}}}
+    &
+    \infer[(\textsc{plus})]
+      {\typeof{e_1 + e_2}{\Gamma}{\kw{int}}}
+      {\typeof{e_1}{\Gamma}{\kw{int}} \quad \typeof{e_2}{\Gamma}{\kw{int}}}
+    &
+    \infer[(\textsc{less-than})]
+      {\typeof{e_1 < e_2}{\Gamma}{\kw{bool}}}
+      {\typeof{e_1}{\Gamma}{\kw{int}} \quad \typeof{e_2}{\Gamma}{\kw{int}}}
+    \\
+    \\
+    \infer[(\textsc{var})]
+      {\typeof{x}{\Gamma}{\tau}}
+      {x \in \texttt{dom}(\Gamma) \quad \tau = \Gamma[x]}
+    &
+    \infer[(\textsc{let})]
+      {\typeof{\kw{let } x: \tau_1 = e_1 \kw{ in } e_2}{\Gamma}{\tau_2}}
+      {\typeof{e_1}{\Gamma}{\tau_1} \quad \typeof{e_2}{\Gamma[x \mapsto \tau_1]}{\tau_2}}
+    &
+    \infer[(\textsc{assign})]
+      {\typeof{\kw{assign } x = e_1 \kw{ in } e_2}{\Gamma}{\tau_2}}
+      {x \in \texttt{dom}(\Gamma) \quad \tau_1 = \Gamma[x]\\
+        \typeof{e_1}{\Gamma}{\tau_1} \quad \typeof{e_2}{\Gamma}{\tau_2}}
+  \end{tabular}
+\end{center}

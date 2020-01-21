@@ -1,0 +1,5 @@
+# Latex compilation intermediates
+*.aux
+*.log
+*.out
+*.thm

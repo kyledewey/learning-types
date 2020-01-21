@@ -1,0 +1,81 @@
+\section{Introduction}
+This document covers the process of \emph{typechecking}, that is, of determining if an input program is well-typed or ill-typed.
+This assumes the reader is familiar with context-free grammars and abstract syntax trees.
+This is intended to be a quick introduction for someone who needs to implement a compiler fast, as opposed to a full introduction to type theory.
+
+\subsection{Expressions and Statements}
+In most programming languages, programs are composed primarily of \emph{expressions} and \emph{statements}.
+Expressions produce a value, whereas statements do not produce values.
+Usually, statements are useful for some sort of effect they have on the code.
+For example, $1$, $1 + 2$, and $x * 5$ are all expressions; these evaluate down to some value.
+In contrast, \texttt{int x = 5;} is a statement; this has the effect of declaring a variable and initializing it with the value of $5$, and does not produce a value overall.
+
+If this still isn't clear, ask yourself: ``can I assign this into a variable?''
+If yes, it's an expression, if not, it's a statement (for our purposes, anyway).
+For example, dovetailing off of the previous examples, \texttt{myVar = 1}, \texttt{myVar = 1 + 2}, and \texttt{myVar = x * 5} all make sense, whereas \texttt{myVar = int x = 5;} does not.
+
+Note that statements can contain expressions within them.
+Using the prior examples, $5$ is an expression, but \texttt{int x = 5;} is a statement.
+Some languages also permit statements to be embedded in expressions.
+Exactly what is permissible is defined by the language's grammar; most languages will have production rules for expressions and statements.
+
+\subsection{Types}
+Most languages have the concept of \emph{types}.
+Types define the kinds of values which are possible in the language, along with the operations which are permissable on specific values.
+For example, consider the following Java code:
+
+\begin{verbatim}
+int x = 1;
+int y = 2;
+int z = x + y;
+\end{verbatim}
+
+Java knows that \texttt{x}, \texttt{y}, and \texttt{z} are all variables of type \texttt{int}, and that \texttt{+} is a valid operation that can be performed with two values of type \texttt{int} (specifically \texttt{x} and \texttt{y} in the example above).
+Moreover, the result of the \texttt{+} operation is \texttt{int}.
+
+\subsubsection{Statically-Typed Languages}
+Java is an example of a \emph{statically-typed language}.
+This means that the types of all variables are known at compile time.
+In statically-typed languages, programs with type errors (i.e., types are used in an inconsistent manner) are rejected (i.e., they fail to compile).
+
+\subsubsection{Dynamically-Typed Languages}
+Python (older variants) and JavaScript are examples of \emph{dynamically-typed languages}.
+This means that types are associated with \emph{values}, not variables.
+This is far less restrictive than with statically-typed languages.
+For example, the following is legal Python code:
+
+\begin{verbatim}
+x = 7
+x = "foo"
+\end{verbatim}
+
+With this program, while \texttt{7} is of type \texttt{int} and \texttt{``foo''} is of type \texttt{String}, \texttt{x} itself has no fixed type associated with it; \texttt{x}'s type depends on whichever value it is holding at the moment.
+This program cannot be written in any statically-typed language, because \texttt{x}'s type isn't permitted to change in a statically-typed language.
+
+Dynamically-typed languages are less restrictive than statically-typed languages, but this comes with a cost.
+For one, performance-wise, generally the more information the compiler has at compile time, the better it can optimize your code.
+For instance, if the compiler knows that \texttt{x} is an \texttt{int}, and \texttt{int} values are 64 bits on your platform, then it can allocate exactly 32 bits for your variable.
+However, if the compiler doesn't know the type of \texttt{x}, it will usually have to allocate space to hold a `pointer to a `box'', where the box itself holds the value.
+This means we'd need 64 bits for the pointer (assuming a 64 bit platform), which itself would point to a box.
+The box would need to be at least 64 bits large for the integer, and is usually a bit larger.
+Moreover, we add an extra level of indirection for every access to \texttt{x}; to get the integer out, we no longer just look up \texttt{x}, we also have to dereference \texttt{x} (two memory lookups as opposed to one).
+
+Beyond performance, dynamically-typed languages can be overly permissive, to the point where they make life difficult.
+If a type error is possible in a dynamically-typed program, then we must find just the right input that will trigger it.
+A bug is present, but it's hidden from us.
+
+
+\subsection{Static Typechecking}
+For our purposes, we will assume we're working with a statically-typed language, and are typechecking the program at compile time.
+The process of typechecking is usually phrased as a series of rules which explain how to derive what the type of a given program is.
+For example, with $1 + 3$, we would need (at least) two rules working in conjunction:
+\begin{itemize}
+\item The type of any integer (e.g., $1$ and $3$) is \texttt{int}
+\item The type of $e_1 + e_2$, where $e_1$ is \texttt{int} and $e_2$ is \texttt{int}, is \texttt{int}
+\end{itemize}
+
+Rules can be specified in natural languages (as English is mostly used above), but this tends to be problematic.
+Natural languages tend to be both verbose and imprecise, leading to lengthy, unclear descriptions.
+Instead, it is usually preferable to use \emph{inference rules}, which can be seen as a way of writing an unambiguous specification using math.
+The next section will introduce inference rules via example.
+
