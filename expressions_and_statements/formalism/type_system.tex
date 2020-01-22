@@ -1,0 +1,20 @@
+\section{Type System}
+Now that we have the syntax defined, we can define the language's type system.
+Formerly, this entailed the definition of a single set of rules which operated over the language's expressions.
+However, since we now have both statements and expressions, we need to define \emph{two} sets of rules: one for expressions and one for statements.
+Both sets of rules will need type environments (expressions have variable access, and all statements currently involve variables), so we'll define that first:
+
+\begin{align*}
+  \Gamma \in \mtt{TypeEnv} &= \mtt{Variable} \to \mtt{Type}
+\end{align*}
+
+\noindent
+Note this is the same type environment definition from last time; this is still a mapping of variables to types.
+
+From here, we define the rules for expressions and statements in the subsections below.
+
+\subsection{Rules for Expressions}
+% Bascially the same as last time
+
+\subsection{Rules for Statements}
+% Statements modify the type environment instead of returning a type

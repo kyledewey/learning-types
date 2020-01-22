@@ -1,0 +1,24 @@
+\section{Introduction}
+The previous handout considered a language which consisted only of expressions, no statements.
+In this handout, we use fundamentally the same language, but use statements instead of expressions for \texttt{let} and \texttt{assign}.
+
+\subsection{Language Used}
+We'll first define the abstract syntax for our language, shown below:
+
+\begin{gather*}
+  x \in \mtt{Variable} \qquad i \in \mtt{Integer}
+\end{gather*}
+\begin{align*}
+  \tau \in \mtt{Type} &::= \kw{int} \alt \kw{bool}\\
+  e \in \mtt{Exp} &::= x \alt i \alt \kw{true} \alt \kw{false} \alt e_1 \;\&\&\; e_2 \alt e_1 + e_2 \alt e_1 < e_2\\
+  s \in \mtt{Stmt} &::= \kw{let } x: \tau = e \alt x = e\\
+  p \in \mtt{Program} &::= s \alt s \; p
+\end{align*}
+
+\noindent
+Compared to the last handout, there are two notable changes:
+\begin{itemize}
+\item \texttt{let} and assignment have been made into statements.
+\item A program is now explicitly defined as either a statement, or a statement followed by another program.
+  Phrased more simply, a program consists of one or more statements.
+\end{itemize}
