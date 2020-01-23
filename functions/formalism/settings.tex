@@ -1,0 +1,59 @@
+\usepackage[cm]{fullpage}
+\usepackage{url}
+\usepackage{listings}
+\usepackage{ntheorem}
+\usepackage[framemethod=tikz]{mdframed}
+\usepackage{color}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{verbatim}
+\usepackage{proof}
+
+\lstdefinelanguage{ModProlog}
+  {morekeywords={op,mod,abort,ancestors,arg,ascii,ask,assert,asserta,%
+      assertz,atom,atomic,char,clause,close,concat,consult,ed,ef,em,%
+      eof,fail,file,findall,write,functor,getc,integer,is,length,%
+      listing,load,name,nl,nonvar,not,numbervars,op,or,pp,prin,print,%
+      private,prompt,putc,ratom,read,read_from_this_file,rename,repeat,%
+      retract,retractall,save,see,seeing,seen,sh,skip,statistics,%
+      subgoal_of,system,tab,tell,telling,time,told,trace,true,unload,%
+      untrace,var,write,false},%
+   sensitive=f,%
+   morecomment=[l]\%,%
+   morecomment=[s]{/*}{*/},%
+   morestring=[bd]",%
+   morestring=[bd]'%
+  }[keywords,comments,strings]%
+
+
+\theoremstyle{break}
+\theoremstyle{nonumberplain}
+\theoremheaderfont{\bfseries}
+\newmdtheoremenv[%
+linecolor=black,leftmargin=60,%
+rightmargin=40,backgroundcolor=gray!70,%
+innertopmargin=5,%
+ntheorem]{side}{Sidenote:}[subsection]
+
+\newenvironment{sem}
+ {\setlength{\abovedisplayskip}{10pt}\setlength{\belowdisplayskip}{10pt}%
+  \csname flalign*\endcsname}
+ {\csname endflalign*\endcsname\ignorespacesafterend}
+
+\let\oldside\side
+\renewcommand{\side}{\oldside\normalfont }
+
+% BEGIN NOTE-RELATED MACROS
+\newcommand{\red}[1]{{\color{red}{#1}}}
+\newcommand{\note}[1]{\red{\textbf{[#1]}}}
+% END NOTE-RELATED MACROS
+
+% BEGIN FORMALISM-RELATED MACROS
+\newcommand{\mtt}[1]{\ensuremath{\mathit{#1}}}
+\newcommand{\kw}[1]{\anywhere{\sffamily{\bfseries\small {#1}}}}
+\newcommand{\alt}{\; {\color{red}\mid}\; }
+\newcommand{\lalt}{\ \ \ \alt}
+\newcommand{\anywhere}[1]{\ensuremath{\mbox{#1}}}
+\newcommand{\typeof}[3]{#2 \vdash #1 : #3}
+\newcommand{\typeofs}[3]{#2 \vdash_s #1 : #3}
+% END FORMALISM-RELATED MACROS

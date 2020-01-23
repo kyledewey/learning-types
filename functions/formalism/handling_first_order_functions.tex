@@ -1,0 +1,185 @@
+\section{Handling First-Order Functions}
+We'll first cover how to handle first-order functions, and then add in higher-order functions.
+
+\subsection{Syntax}
+We will first introduce first-order functions.
+As part of this, we need to modify our syntax, shown below.
+For convenience, we'll introduce the notation $\vec{a}$, which means we have zero or more $a$'s; this has the same meaning as $a^*$ in standard EBNF, but it avoids some ambiguities.
+
+\begin{gather*}
+  x \in \mtt{Variable} \qquad i \in \mtt{Integer} \qquad fn \in \mtt{FunctionName}
+\end{gather*}
+\begin{align*}
+  \tau \in \mtt{Type} &::= \kw{int} \alt \kw{bool}\\
+  e \in \mtt{Exp} &::= x \alt i \alt \kw{true} \alt \kw{false} \alt e_1 \;\&\&\; e_2 \alt e_1 + e_2 \alt e_1 < e_2 \alt fn(\vec{e})\\
+  s \in \mtt{Stmt} &::= \kw{let } x: \tau = e \alt x = e\\
+  f \in \mtt{Function} &::= \tau_1\;fn(\overrightarrow{\tau_2\;x}) \{ \vec{s}\;e \}\\
+  p \in \mtt{Program} &::= \vec{f}
+\end{align*}
+
+Compared to some prior changes, this one is fairly dramatic.
+Notably:
+\begin{itemize}
+\item We now have function names ($fn$) as a primitive thing.
+\item We now have first-order functions ($f$).
+  First order functions have a return type ($\tau_1$).
+  These take zero or more parameters, each with their own type ($\overrightarrow{\tau_2\;x}$).
+  The body of the function consistes of zero or more statements ($\vec{s}$), followed by a single expression ($e$).
+  The intention here is that a function returns whatever $e$ evaluates to.
+  By forcing functions to end with an expression, we syntactically ensure that functions always have a return.
+  If we instead made a \texttt{return} statement, we'd need to ensure that the function contains a \texttt{return} statement; this is doable, and real languages do this, but it's extra relatively uninteresting work.
+\item We now have function calls, which take zero or more parameters $fn(\vec{e})$.
+\item Programs are now defined as a series of zero or more first-order functions.
+  The intention is that one of these functions (traditionally named \texttt{main}) serves as the entry point of the program.
+\end{itemize}
+
+\subsection{Type Rules}
+As before, we will need a type environment mapping variables to types:
+\begin{align*}
+  \Gamma \in \mtt{TypeEnv} &= \mtt{Variable} \to \mtt{Type}
+\end{align*}
+
+However, this time around, the type environment alone won't be enough.
+Consider function calls.
+When calling a function, we need to know a few things:
+\begin{itemize}
+\item Whether or not the function is defined (its a type error to call a nonexistant function)
+\item The number of parameters the function takes (if we pass too many or too few, this should be a type error)
+\item The types of the parameters the function takes (if we pass arguments of the wrong type, this should be a type error)
+\item The return type of the function (if we pass the right number of parameters of the right types, then we need to know what we get back)
+\end{itemize}
+
+It's most convenient to gather all this information into a single data structure before we execute any typechecking rules.
+This data structure is commonly referred to as a \emph{symbol table}, which is a fancy term for a data structure that holds program information which can be derived directly from the abstract syntax tree.
+For our purposes, the following definition suffices:
+
+\begin{align*}
+  st \in \mtt{SymbolTable} &= \mtt{FunctionName} \to \overrightarrow{\mtt{Type}} \times \mtt{Type}
+\end{align*}
+
+The above definition says that a symbol table maps function names to tuples (specifically 2-tuples: pairs).
+The first element of the pair is a list of types, which encode the parameter types to the function.
+The second element of the pair is a type, which encodes the return type of the given function.
+The symbol table can be derived using the following Python-like pseudocode:
+\begin{verbatim}
+symbol_table = dict()
+for f in functions:
+  if f.name in symbol_table:
+    raise TypeError("duplicate function name")
+  param_names = set([entry.name for entry in f.parameters])
+  if len(param_names) != len(f.parameters):
+    raise TypeError("duplicate parameter name")
+  dict[f.name] = (f.return_type, f.parameters)
+\end{verbatim}
+
+\noindent
+The above code disallows two functions to have the same name, and similarly disallows two formal parameters of the same function to have the same name.
+Other than this, it basically just summarizes all the function parameter and return types.
+
+With the symbol table in mind, we can define our typing rules.
+Throughout the duration of typechecking, the symbol table ($st$) never changes.
+As such, we will treat $st$ as if it's a global variable.
+Pedantically, $st$ should be threaded through all the rules, but because it never changes, this just adds a lot of noise to the rules without giving any real benefit.
+Without further ado, we define the rules below.
+
+\subsubsection{Rules for Expressions}
+The original rules for expressions are unchanged, though \textsc{less-than} has been renamed \textsc{lt} for space.
+We now have a rule handling first-order function calls (\textsc{fo-call}), which makes use of $st$.
+\begin{center}
+  \begin{tabular}{ccc}
+    \infer[(\textsc{integer})]
+      {\typeof{i}{\Gamma}{\kw{int}}}
+      {}
+    &
+    \infer[(\textsc{true})]
+      {\typeof{\kw{true}}{\Gamma}{\kw{bool}}}
+      {}
+    &
+    \infer[(\textsc{false})]
+      {\typeof{\kw{false}}{\Gamma}{\kw{bool}}}
+      {}
+      \\
+      \\
+    \infer[(\textsc{and})]
+      {\typeof{e_1 \;\&\&\; e_2}{\Gamma}{\kw{bool}}}
+      {\typeof{e_1}{\Gamma}{\kw{bool}} \quad \typeof{e_2}{\Gamma}{\kw{bool}}}
+    &
+    \infer[(\textsc{plus})]
+      {\typeof{e_1 + e_2}{\Gamma}{\kw{int}}}
+      {\typeof{e_1}{\Gamma}{\kw{int}} \quad \typeof{e_2}{\Gamma}{\kw{int}}}
+    &
+    \infer[(\textsc{lt})]
+      {\typeof{e_1 < e_2}{\Gamma}{\kw{bool}}}
+      {\typeof{e_1}{\Gamma}{\kw{int}} \quad \typeof{e_2}{\Gamma}{\kw{int}}}
+    \\
+    \\
+    \infer[(\textsc{var})]
+      {\typeof{x}{\Gamma}{\tau}}
+      {x \in \texttt{dom}(\Gamma) \quad \tau = \Gamma[x]}
+    &
+    \infer[(\textsc{fo-call})]
+      {\typeof{fn(\vec{e})}{\Gamma}{\tau_1}}
+      {fn \in \texttt{dom}(st) \quad
+        (\tau_1, \vec{\tau_2}) = st[fn] \vspace{0.05in}\\
+        {|\vec{e}| = |\vec{\tau_2}|} \quad
+        \overrightarrow{\typeof{e}{\Gamma}{\tau_2}}}
+    &
+  \end{tabular}
+\end{center}
+
+\textsc{fo-call} above a lot of work, specifically:
+\begin{itemize}
+\item It checks that the called function ($fn$) was defined ($fn \in \texttt{dom}(st)$).
+\item It looks up the expected return type and parameter types of the function ($(\tau_1, \vec{\tau_2}) = st[fn]$).
+\item It checks that the number of actual parameters matches up with the number of expected parameters ($|\vec{e}| = |\vec{\tau_2}|$).
+  Note that $|a|$ denotes the cardinality of $a$ here.
+\item It checks that the types of the actual parameters ($\vec{e}$) match up with the types of the expected parameters ($\vec{\tau_2}$).
+\end{itemize}
+If any of the above checks fail, the typechecking of the call will fail.
+
+\subsubsection{Rules for Statements}
+The rules for statements are unchanged, and have been duplicated below for convenience.
+$\vdash_s$ denotes typing rules for statements.
+\begin{center}
+  \begin{tabular}{cc}
+    \infer[(\textsc{let})]
+      {\typeofs{\kw{let } x: \tau = e}{\Gamma}{\Gamma[x \mapsto \tau]}}
+      {\typeofs{e}{\Gamma}{\tau}}
+    &
+    \infer[(\textsc{assign})]
+      {\typeofs{x = e}{\Gamma}{\Gamma}}
+      {x \in \texttt{dom}(\Gamma) \quad
+        \tau = \Gamma[x] \quad
+        \typeofs{e}{\Gamma}{\tau}}
+  \end{tabular}
+\end{center}
+
+\subsubsection{Rules for Functions}
+We now need a typing rule that handles functions.
+Since our functions are all defined at the toplevel, and because we have no global variables in this language, our typing rules for functions do not need to take a type environment $\Gamma$; $\Gamma$ will always be empty initially, as no variables can possibly be in scope.
+For similar reasons, it doesn't make sense to return a type environment or a type; functions live in the symbol table ($st$), which exists independently of thiese rules.
+We define the typing rules below:
+
+\begin{center}
+  \begin{tabular}{c}
+    \infer[(\textsc{function})]
+      {\tau_1\;fn(\overrightarrow{\tau_2\;x}) \{ \vec{s}\;e \}}
+      {\Gamma_1 = \overrightarrow{[x \mapsto \tau_2]} \quad
+        \overrightarrow{\Gamma_1 \vdash_s s} : \Gamma_2 \quad
+        \typeof{e}{\Gamma_2}{\tau_1}}
+  \end{tabular}
+\end{center}
+
+\noindent
+The above rule says:
+\begin{itemize}
+\item Construct a type environment ($\Gamma_1$) from the parameters to the function.
+  Each parameter name ($x$) becomes a key, and the parameter's corresponding type ($\tau_2$) becomes a value.
+\item Using $\Gamma_1$ as an initial type environment, typecheck the statements ($\vec{s}$), yielding a new type environment ($\Gamma_2$).
+\item Typecheck the expression ($e$) underneath $\Gamma_2$.
+  The type of $e$ should match up with the return type the user specified ($\tau_1$)
+\end{itemize}
+
+If we apply \textsc{function} to each function in the program, then we will end up typechecking the whole program.
+If any application of \textsc{function} fails, then there is a type error in the program.
+

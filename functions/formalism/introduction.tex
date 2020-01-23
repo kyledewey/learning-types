@@ -1,0 +1,19 @@
+\section{Introduction}
+All modern programming languages have some concept of a bit of code that can be called on demand.
+These bits go by a lot of names, each with their own subtly different meanings, including functions, methods, subroutines, and procedures.
+In this handout, we'll go over how to typecheck functions.
+
+Specifically, we will cover two kinds of functions, which are not mutually-exclusive:
+\begin{itemize}
+\item First-order functions
+\item Higher-order functions
+\end{itemize}
+
+\noindent
+First-order functions generally exist at the toplevel (or near the toplevel) of a program, and are required to have a name.
+All functions in C are first-order functions.
+In contrast, higher-order functions generally do not have an associated name, and these can be created anywhere.
+Higher-order functions allow us to treat functions as data: whole functions can be passed as parameters, returned from other functions, or saved in a data structure.
+We assume the reader already has some familiarity with higher-order functions.
+
+The rest of this handout covers how to handle these two kinds of functions.
