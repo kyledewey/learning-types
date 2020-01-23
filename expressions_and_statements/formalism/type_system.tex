@@ -10,11 +10,99 @@ Both sets of rules will need type environments (expressions have variable access
 
 \noindent
 Note this is the same type environment definition from last time; this is still a mapping of variables to types.
-
-From here, we define the rules for expressions and statements in the subsections below.
+From here, we define the rules for expressions, statements, and programs in the subsections below.
 
 \subsection{Rules for Expressions}
-% Bascially the same as last time
+The rules for expressions are identical to what we had before, though without \texttt{let} and assignment:
+\begin{center}
+  \begin{tabular}{ccc}
+    \infer[(\textsc{integer})]
+      {\typeof{i}{\Gamma}{\kw{int}}}
+      {}
+    &
+    \infer[(\textsc{true})]
+      {\typeof{\kw{true}}{\Gamma}{\kw{bool}}}
+      {}
+    &
+    \infer[(\textsc{false})]
+      {\typeof{\kw{false}}{\Gamma}{\kw{bool}}}
+      {}
+      \\
+      \\
+    \infer[(\textsc{and})]
+      {\typeof{e_1 \;\&\&\; e_2}{\Gamma}{\kw{bool}}}
+      {\typeof{e_1}{\Gamma}{\kw{bool}} \quad \typeof{e_2}{\Gamma}{\kw{bool}}}
+    &
+    \infer[(\textsc{plus})]
+      {\typeof{e_1 + e_2}{\Gamma}{\kw{int}}}
+      {\typeof{e_1}{\Gamma}{\kw{int}} \quad \typeof{e_2}{\Gamma}{\kw{int}}}
+    &
+    \infer[(\textsc{less-than})]
+      {\typeof{e_1 < e_2}{\Gamma}{\kw{bool}}}
+      {\typeof{e_1}{\Gamma}{\kw{int}} \quad \typeof{e_2}{\Gamma}{\kw{int}}}
+    \\
+    \\
+    &
+    \infer[(\textsc{var})]
+      {\typeof{x}{\Gamma}{\tau}}
+      {x \in \texttt{dom}(\Gamma) \quad \tau = \Gamma[x]}
+    &
+  \end{tabular}
+\end{center}
 
 \subsection{Rules for Statements}
-% Statements modify the type environment instead of returning a type
+Statements are a bit trickier.
+By their nature, statements don't give back values, so it doesn't make sense for them to have a return type.
+However, statements \emph{do} have an effect: they add and interact with variables in scope.
+With this in mind, while statements don't have corresponding types, they instead produce new type environments.
+If we were to implement this in Java, when typechecking statements, we'd have a type signature something like the following:
+
+\begin{verbatim}
+public Map<Variable, Type> typecheckStatement(Stmt s, Map<Variable, Type> env)
+  throws IllTypedException
+\end{verbatim}
+
+In formal notation, we'll have our statements give back type environments instead of types.
+To help keep things unambiguous, we'll use $\vdash_s$ to indicate the typechecking of statements, whereas just $\vdash$ refers to typechecking expressions.
+With this in mind, the typing rules for statements are below:
+
+\begin{center}
+  \begin{tabular}{cc}
+    \infer[(\textsc{let})]
+      {\typeofs{\kw{let } x: \tau = e}{\Gamma}{\Gamma[x \mapsto \tau]}}
+      {\typeofs{e}{\Gamma}{\tau}}
+    &
+    \infer[(\textsc{assign})]
+      {\typeofs{x = e}{\Gamma}{\Gamma}}
+      {x \in \texttt{dom}(\Gamma) \quad
+        \tau = \Gamma[x] \quad
+        \typeofs{e}{\Gamma}{\tau}}
+  \end{tabular}
+\end{center}
+
+As shown, \texttt{let} adds a new variable to the type environment, making sure that the type of the variable ($\tau$) is the same as the type of the expression ($e$).
+Assignment doesn't change the input type environment ($\Gamma$) at all.
+Instead, it makes sure the variable being assigned to ($x$) is in scope, and makes sure the type of $e$ is the same type as the variable in scope ($\tau$).
+
+\subsection{Rules for Programs}
+We can now define the typechecking rules for whole programs, where a program is one or more statements.
+The idea is that we can chain along the type environment as we process statements.
+As such, typechecking whole programs is similar to typechecking statements: we take an input type environment, and produce an output type environment.
+We'll use $\vdash_p$ to help keep things unambiguous.
+This is shown below:
+
+\begin{center}
+  \begin{tabular}{cc}
+    \infer[(\textsc{prog-one})]
+      {\typeofp{s}{\Gamma_1}{\Gamma_2}}
+      {\typeofs{s}{\Gamma_1}{\Gamma_2}}
+    &
+    \infer[(\textsc{prog-multi})]
+      {\typeofp{s\;p}{\Gamma_1}{\Gamma_3}}
+      {\typeofs{s}{\Gamma_1}{\Gamma_2} \quad
+        \typeofp{p}{\Gamma_2}{\Gamma_3}}
+  \end{tabular}
+\end{center}
+
+\noindent
+Note that the premise of \textsc{prog-one} uses the typechecking rules for statements instead of programs.
