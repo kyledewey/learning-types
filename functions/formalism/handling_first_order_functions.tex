@@ -69,7 +69,7 @@ for f in functions:
   param_names = set([entry.name for entry in f.parameters])
   if len(param_names) != len(f.parameters):
     raise TypeError("duplicate parameter name")
-  dict[f.name] = (f.return_type, f.parameters)
+  dict[f.name] = (f.return_type, [entry.type for entry in f.parameters])
 \end{verbatim}
 
 \noindent
