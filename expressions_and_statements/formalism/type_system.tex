@@ -70,13 +70,13 @@ With this in mind, the typing rules for statements are below:
   \begin{tabular}{cc}
     \infer[(\textsc{let})]
       {\typeofs{\kw{let } x: \tau = e}{\Gamma}{\Gamma[x \mapsto \tau]}}
-      {\typeofs{e}{\Gamma}{\tau}}
+      {\typeof{e}{\Gamma}{\tau}}
     &
     \infer[(\textsc{assign})]
       {\typeofs{x = e}{\Gamma}{\Gamma}}
       {x \in \texttt{dom}(\Gamma) \quad
         \tau = \Gamma[x] \quad
-        \typeofs{e}{\Gamma}{\tau}}
+        \typeof{e}{\Gamma}{\tau}}
   \end{tabular}
 \end{center}
 
