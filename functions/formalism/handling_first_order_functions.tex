@@ -54,12 +54,12 @@ This data structure is commonly referred to as a \emph{symbol table}, which is a
 For our purposes, the following definition suffices:
 
 \begin{align*}
-  st \in \mtt{SymbolTable} &= \mtt{FunctionName} \to \overrightarrow{\mtt{Type}} \times \mtt{Type}
+  st \in \mtt{SymbolTable} &= \mtt{FunctionName} \to \mtt{Type} \times \overrightarrow{\mtt{Type}}
 \end{align*}
 
 The above definition says that a symbol table maps function names to tuples (specifically 2-tuples: pairs).
-The first element of the pair is a list of types, which encode the parameter types to the function.
-The second element of the pair is a type, which encodes the return type of the given function.
+The first element of the pair is a type, which encodes the return type of the given function.
+The second element of the pair is a list of types, which encode the parameter types to the function.
 The symbol table can be derived using the following Python-like pseudocode:
 \begin{verbatim}
 symbol_table = dict()
