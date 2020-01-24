@@ -1,0 +1,72 @@
+\section{Handling Higher-Order Functions}
+In this section, we add support for higher-order functions.
+
+\subsection{Syntax}
+We first modify our syntax for higher-order functions:
+
+\begin{gather*}
+  x \in \mtt{Variable} \qquad i \in \mtt{Integer} \qquad fn \in \mtt{FunctionName}
+\end{gather*}
+\begin{align*}
+  \tau \in \mtt{Type} &::= \kw{int} \alt \kw{bool} \alt \vec{\tau_1} \Rightarrow \tau_2\\
+  e \in \mtt{Exp} &::= x \alt i \alt \kw{true} \alt \kw{false} \alt e_1 \;\&\&\; e_2 \alt e_1 + e_2 \alt e_1 < e_2 \alt fn(\vec{e})\\
+  &\lalt (\overrightarrow{\tau\;x}) \Rightarrow e \alt e_1(\vec{e_2})\\
+  s \in \mtt{Stmt} &::= \kw{let } x: \tau = e \alt x = e\\
+  f \in \mtt{Function} &::= \tau_1\;fn(\overrightarrow{\tau_2\;x}) \{ \vec{s}\;e \}\\
+  p \in \mtt{Program} &::= \vec{f}
+\end{align*}
+
+\noindent
+There are three notable changes above:
+\begin{itemize}
+\item We've added a new type ($\vec{\tau_1} \Rightarrow \tau_2$).
+  Since higher-order functions are themselves values, they need their own type.
+  This type is \emph{recursively defined}; it contains other types inside of it (the $\vec{\tau_1}$ and $\tau_2$).
+  Specifically, this type encodes the expected parameter types of the higher-order function ($\vec{\tau_1}$), as well as the return type ($\tau_2$).
+\item We've added a new expression: ($(\overrightarrow{\tau\;x}) \Rightarrow e$).
+  This creates a new higher-order function with the parameters and their corresponding types specified by $(\overrightarrow{\tau\;x})$.
+  The function returns whatever $e$ returns.
+\item We've added another new expression: $e_1(\vec{e_2})$.
+  This calls a higher-order function.
+  The intention is that $e_1$ evaluates down to a higher-order function, and $\vec{e_2}$ specifies the parameters to the higher-order function.
+\end{itemize}
+
+\subsection{Type Rules}
+Now that the syntax has been tweaked, we can focus on the corresponding typing rules.
+Surprisingly, very little has to change to handle higher-order functions.
+In fact, we need only add the rules specific to our new expressions; everything else stays the same.
+These rules are below, where \textsc{ho} stands for ``higher-order''.
+
+\begin{center}
+  \begin{tabular}{cc}
+    \infer[(\textsc{ho-def})]
+      {\typeof{(\overrightarrow{\tau_1\;x}) \Rightarrow e}{\Gamma_1}{\vec{\tau_1} \Rightarrow \tau_2}}
+      {\texttt{allDistinct}(\vec{x}) \quad
+        \Gamma_2 = \Gamma_1\overrightarrow{[x \mapsto \tau_1]} \quad
+        \typeof{e}{\Gamma_2}{\tau_2}}
+    &
+    \infer[(\textsc{ho-call})]
+      {\typeof{e_1(\vec{e_2})}{\Gamma}{\tau_2}}
+      {\typeof{e_1}{\Gamma}{\vec{\tau_1} \Rightarrow \tau_2} \quad
+        |\vec{\tau_1}| = |\vec{e_2}| \quad
+        \overrightarrow{\typeof{e_2}{\Gamma}{\tau_1}}}
+  \end{tabular}
+\end{center}
+
+\noindent
+A description of the above rules follows:
+\begin{itemize}
+\item \textsc{ho-def} first checks to make sure that none of the variables are duplicated in the parameters using $\texttt{allDistinct}(\vec{x})$.
+  Here, \texttt{allDistinct} is a \emph{helper function} (yes, we can have these in math, too).
+  In this case, the meaning of \texttt{allDistinct} should be clear, though pedantically \texttt{allDistinct}'s definition should be provided.
+  We create a new type environment $\Gamma_2$ from $\Gamma_1$, adding in all the variable/type bindings ($\overrightarrow{[x \mapsto \tau_1]}$) introduced in the function (via $\Gamma_2 = \Gamma_1\overrightarrow{[x \mapsto \tau_1]}$).
+  We then typecheck $e$ underneath $\Gamma_2$, yielding a return type for our function ($\tau_2$).
+  We finally bundle everything together into a single function type ($\vec{\tau_1} \Rightarrow \tau_2$).
+\item \textsc{ho-call} first checks that expression $e_1$ is a function type ($\typeof{e_1}{\Gamma}{\vec{\tau_1} \Rightarrow \tau_2}$).
+  From there, it checks that the function was given the correct number of parameters ($|\vec{\tau_1}| = |\vec{e_2}|$).
+  If so, it will check that the types of the actual parameters ($\vec{e_2}$) match the expected parameter types ($\vec{\tau_1}$), via $\overrightarrow{\typeof{e_2}{\Gamma}{\tau_1}}$.
+  Finally, it yields the result type $\tau_2$, corresponding to the return type of the function.
+\end{itemize}
+
+\noindent
+With that, we've added both first-order and higher-order functions to this language.
